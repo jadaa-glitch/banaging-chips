@@ -1,0 +1,533 @@
+{% extends "base.html" %}
+
+{% block title %}Sales Records — Banaging Chips{% endblock %}
+
+{% block content %}
+
+<!-- Header Row -->
+<div class="page-header-row">
+    <div>
+        <h1 class="page-title">Sales Records</h1>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <div style="background: #FFF; padding: 6px 14px; border-radius: var(--radius-pill); border: 1px solid var(--border-light); font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--brand-green);"></span>
+            Today's Shift: <strong style="color: var(--text-primary);">{{ shift_revenue | currency }}</strong>
+        </div>
+        <div style="background: #FFF; padding: 6px 14px; border-radius: var(--radius-pill); border: 1px solid var(--border-light); font-size: 13px; font-weight: 600;">
+            Total Units: <strong style="color: var(--brand-red);">{{ shift_units }} Packs</strong>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Card -->
+<div class="card" style="margin-bottom: 24px; padding: 20px 24px;">
+    <form method="GET" action="{{ url_for('sales.records') }}">
+        <div style="display: grid; grid-template-columns: 2fr 1.2fr 2fr; gap: 16px; margin-bottom: 16px;">
+            <div>
+                <label class="form-label">Customer Search</label>
+                <div style="position: relative;">
+                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #9F938E; display: flex; align-items: center;" aria-hidden="true">
+                        <i data-lucide="search" class="icon-sm"></i>
+                    </span>
+                    <input type="text" name="search" class="form-input" style="padding-left: 38px;" placeholder="Search by customer name (e.g. Dela Cruz)..." value="{{ search }}">
+                </div>
+            </div>
+            <div>
+                <label class="form-label">Flavor Category</label>
+                <select name="flavor" class="form-select">
+                    <option value="all">All Flavors</option>
+                    {% for f in all_flavors %}
+                    <option value="{{ f.product_id }}" {% if selected_flavor|string == f.product_id|string %}selected{% endif %}>{{ f.display_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label class="form-label" style="margin-bottom: 0;">Date Filter Range</label>
+                    <span style="font-size: 11px; color: var(--text-muted);">Operating Dates</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <input type="date" name="start_date" class="form-input" value="{{ start_date }}" aria-label="Start date">
+                    <input type="date" name="end_date" class="form-input" value="{{ end_date }}" aria-label="End date">
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-top: 1px solid var(--border-light); padding-top: 14px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Active parameters:</span>
+                {% if start_date or end_date %}
+                <span class="badge-tag">{{ start_date or 'Start' }} - {{ end_date or 'End' }}</span>
+                {% endif %}
+                <span class="badge-tag">
+                    {% if selected_flavor and selected_flavor != 'all' %}
+                        Filtered Flavor
+                    {% else %}
+                        All Flavors
+                    {% endif %}
+                </span>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <a href="{{ url_for('sales.records') }}" class="btn btn-outline-white" style="font-size: 13px; padding: 8px 16px;">
+                    <i data-lucide="rotate-ccw" class="icon-sm" aria-hidden="true"></i>
+                    <span>Reset Filters</span>
+                </a>
+                <button type="submit" class="btn btn-primary-red" style="font-size: 13px; padding: 8px 18px;">
+                    <i data-lucide="search" class="icon-sm" aria-hidden="true"></i>
+                    <span>Search Records</span>
+                </button>
+                <button type="button" class="btn btn-amber" onclick="openImportModal()" style="font-size: 13px; padding: 8px 18px;">
+                    <i data-lucide="file-up" class="icon-sm" aria-hidden="true"></i>
+                    <span>Import CSV/Excel</span>
+                </button>
+                <a href="{{ url_for('sales.add') }}" class="btn btn-primary-green" style="font-size: 13px; padding: 8px 18px;">
+                    <i data-lucide="plus" class="icon-sm" aria-hidden="true"></i>
+                    <span>Add New Record</span>
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Transactions Table Card -->
+<div class="card">
+    <div class="chart-card-header" style="margin-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <h3 style="font-size: 17px; font-weight: 700;">Recorded Transactions</h3>
+            <span class="badge-tag" style="background: #FEF0EA; color: var(--brand-red); font-weight: 700;">{{ total_count }} Active Rows</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px; font-size: 12px; color: var(--text-secondary);">
+            <span style="display: flex; align-items: center; gap: 4px;">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--brand-green);"></span>
+                <span>Cash Paid</span>
+            </span>
+            <span style="display: flex; align-items: center; gap: 4px;">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--brand-gold);"></span>
+                <span>Verified Auditor</span>
+            </span>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>DATE</th>
+                    <th>CUSTOMER NAME</th>
+                    <th>FLAVOR</th>
+                    <th>QUANTITY</th>
+                    <th>AMOUNT PAID</th>
+                    <th>RECORDED BY</th>
+                    <th style="text-align: center;">ACTIONS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if sales %}
+                    {% for r in sales %}
+                    <tr>
+                        <td class="id-badge">{{ r.formatted_id }}</td>
+                        <td style="color: var(--text-secondary);">{{ r.sale_date }}</td>
+                        <td style="font-weight: 600;">{{ r.customer_name }}</td>
+                        <td>
+                            <span class="flavor-badge {% if 'original' in r.flavor_name.lower() %}original{% elif 'cheese' in r.flavor_name.lower() %}cheese{% elif 'sour' in r.flavor_name.lower() %}sour-cream{% else %}bbq{% endif %}">
+                                {{ r.flavor_name }}
+                            </span>
+                        </td>
+                        <td style="font-weight: 700;">{{ r.quantity }}</td>
+                        <td><span class="amount-green">{{ r.amount_paid | currency }}</span></td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-secondary);">
+                                <i data-lucide="shield-check" class="icon-sm" style="color: var(--brand-gold);" aria-hidden="true"></i>
+                                <span>{{ r.recorded_by_name }}</span>
+                            </div>
+                        </td>
+                        <td style="text-align: center;">
+                            <div style="display: inline-flex; align-items: center; gap: 8px;">
+                                <a href="{{ url_for('sales.edit', sale_id=r.sale_id) }}" title="Edit record" aria-label="Edit record {{ r.formatted_id }}" style="color: var(--text-secondary); text-decoration: none; padding: 4px; display: inline-flex; align-items: center;">
+                                    <i data-lucide="pencil" class="icon-sm"></i>
+                                </a>
+                                <button type="button" onclick="openDeleteModal('{{ r.sale_id }}', '{{ r.formatted_id }}', '{{ r.sale_date }}', '{{ r.customer_name }}', '{{ r.display_name }}', '{{ r.quantity }}', '{{ r.amount_paid | currency }}')" title="Delete record" aria-label="Delete record {{ r.formatted_id }}" style="background: none; border: none; cursor: pointer; padding: 4px; color: #C62828; display: inline-flex; align-items: center;">
+                                    <i data-lucide="trash-2" class="icon-sm"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 36px; color: var(--text-muted);">
+                            No sales records matching current filters.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination & Action Footer -->
+    <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-light); padding-top: 18px; margin-top: 14px; flex-wrap: wrap; gap: 12px;">
+        <span style="font-size: 12.5px; color: var(--text-muted);">
+            Showing {{ sales | length }} of {{ total_count }} entries
+        </span>
+
+        <!-- Pagination Controls -->
+        <div style="display: flex; align-items: center; gap: 6px;">
+            {% if current_page > 1 %}
+            <a href="{{ url_for('sales.records', page=current_page-1, search=search, flavor=selected_flavor, start_date=start_date, end_date=end_date) }}" class="btn btn-outline-white" style="padding: 4px 10px; font-size: 12px;">&lt; Previous</a>
+            {% endif %}
+
+            <span style="background: var(--brand-red); color: #FFF; width: 28px; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 700;">
+                {{ current_page }}
+            </span>
+
+            {% if current_page < total_pages %}
+            <a href="{{ url_for('sales.records', page=current_page+1, search=search, flavor=selected_flavor, start_date=start_date, end_date=end_date) }}" class="btn btn-outline-white" style="padding: 4px 10px; font-size: 12px;">Next &gt;</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-light); padding-top: 14px; margin-top: 14px; font-size: 12px; color: var(--text-muted); flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="shield-check" class="icon-sm" style="color: var(--brand-green);" aria-hidden="true"></i>
+            <span>Secure batch validation enabled • Transactions automatically synced to main commissary warehouse.</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px;">
+            <button onclick="window.print()" style="background: none; border: none; font-size: 12.5px; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; gap: 6px; font-family: inherit;">
+                <i data-lucide="printer" class="icon-sm" aria-hidden="true"></i>
+                <span>Print Shift Report</span>
+            </button>
+            <a href="{{ url_for('sales.export_csv') }}" style="color: var(--text-primary); text-decoration: none; display: flex; align-items: center; gap: 6px; font-weight: 600;">
+                <i data-lucide="download" class="icon-sm" aria-hidden="true"></i>
+                <span>Export CSV</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- ================= DELETE CONFIRMATION MODAL (Matching Delete Record.png) ================= -->
+<div id="deleteModal" class="modal-overlay">
+    <div class="modal-dialog">
+        <div style="text-align: center; margin-bottom: 18px;">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background: #FDE8E8; color: var(--brand-red); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                <i data-lucide="trash-2" class="icon-lg"></i>
+            </div>
+            <h2 style="font-size: 22px; font-weight: 800; color: var(--brand-red);">Delete this record?</h2>
+            <p style="font-size: 13.5px; color: var(--text-secondary); margin-top: 4px;">Are you sure you want to remove this sales batch from the active ledger?</p>
+        </div>
+
+        <form id="deleteForm" method="POST" action="">
+            <!-- Sales Record Details Summary Box -->
+            <div style="background: #FAF5F0; border: 1px solid var(--border-light); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 12px; font-weight: 700; color: var(--text-muted);">
+                    <span style="display: flex; align-items: center; gap: 6px;">
+                        <i data-lucide="file-text" class="icon-sm" aria-hidden="true"></i>
+                        <span>SALES RECORD DETAILS</span>
+                    </span>
+                    <span id="delModalIdBadge" style="background: #FCE8E8; color: var(--brand-red); padding: 2px 8px; border-radius: var(--radius-pill);">REC-1048</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px; margin-bottom: 12px;">
+                    <div>
+                        <div style="color: var(--text-muted); font-size: 11px;">Date Recorded</div>
+                        <strong id="delModalDate">2025-05-18</strong>
+                    </div>
+                    <div>
+                        <div style="color: var(--text-muted); font-size: 11px;">Customer Name</div>
+                        <strong id="delModalCustomer">Juan Dela Cruz</strong>
+                    </div>
+                    <div>
+                        <div style="color: var(--text-muted); font-size: 11px;">Flavor Variant</div>
+                        <strong id="delModalFlavor">Cheese Delight</strong>
+                    </div>
+                    <div>
+                        <div style="color: var(--text-muted); font-size: 11px;">Quantity Sold</div>
+                        <strong id="delModalQty">10 packs</strong>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-light); padding-top: 10px;">
+                    <span style="font-size: 13px; color: var(--text-secondary);">Total Amount</span>
+                    <span id="delModalAmount" style="font-size: 20px; font-weight: 800; color: var(--brand-red);">₱500.00</span>
+                </div>
+            </div>
+
+            <!-- Audit Reason Selector for Soft Delete -->
+            <div style="margin-bottom: 16px;">
+                <label class="form-label" style="font-size: 12px;">Reason for Deletion (Audit Trail)</label>
+                <select name="delete_reason" class="form-select" style="font-size: 13px;">
+                    <option value="Cashier Punch Errors">Cashier Punch Errors</option>
+                    <option value="Customer Cancelled">Customer Cancelled order before dispatch</option>
+                    <option value="Quality Return / Reseal">Quality Return / Reseal (replacement issued)</option>
+                    <option value="Wrong Flavor">Wrong flavor entered by staff</option>
+                    <option value="Other">Other reason</option>
+                </select>
+            </div>
+
+            <!-- Important Notice Box -->
+            <div style="background: #FFF9E6; border: 1px solid #FFE082; border-radius: 10px; padding: 12px 14px; margin-bottom: 22px; font-size: 12.5px; color: #855302; display: flex; gap: 10px; align-items: flex-start;">
+                <i data-lucide="alert-triangle" class="icon-md" style="color: #D4880E; flex-shrink: 0; margin-top: 2px;" aria-hidden="true"></i>
+                <div>
+                    <strong>IMPORTANT NOTICE</strong><br>
+                    Note: This record will <strong>NOT be permanently lost</strong>. It will be moved to the <strong>Deleted Records archive</strong> where it can be reviewed or restored by the store manager.
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display: flex; gap: 12px;">
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()" style="flex: 1; justify-content: center;">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary-red" style="flex: 1; justify-content: center;">
+                    <i data-lucide="trash-2" class="icon-sm" aria-hidden="true"></i>
+                    <span>Yes, Delete</span>
+                </button>
+            </div>
+            <div style="text-align: center; margin-top: 12px; font-size: 11px; color: var(--text-muted);">
+                <kbd style="background: #EFE6DF; padding: 2px 6px; border-radius: 4px;">ESC</kbd> to Cancel • <kbd style="background: #EFE6DF; padding: 2px 6px; border-radius: 4px;">ENTER</kbd> to Confirm
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ================= OPTION A: IMPORT CSV / EXCEL MODAL ================= -->
+<div id="importModal" class="modal-overlay">
+    <div class="modal-dialog" style="max-width: 680px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: #FEF4E6; color: #F5A623; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="file-up" class="icon-md"></i>
+                </div>
+                <div>
+                    <h2 style="font-size: 20px; font-weight: 800; color: var(--brand-red);">Import Sales Records</h2>
+                    <p style="font-size: 12.5px; color: var(--text-secondary);">Batch ingest transactions from CSV or Excel (.xlsx)</p>
+                </div>
+            </div>
+            <button onclick="closeImportModal()" style="background: none; border: none; cursor: pointer; color: var(--text-muted); display: flex; align-items: center;" aria-label="Close modal">
+                <i data-lucide="x" class="icon-md"></i>
+            </button>
+        </div>
+
+        <!-- Step 1: Upload Dropzone -->
+        <div id="importStepUpload">
+            <div style="border: 2px dashed #E0D4CA; border-radius: 14px; padding: 28px; text-align: center; background: #FAF5F0; margin-bottom: 16px; cursor: pointer;" onclick="document.getElementById('importFileInput').click()">
+                <div style="margin-bottom: 8px; color: #A39388;">
+                    <i data-lucide="file-spreadsheet" class="icon-xl"></i>
+                </div>
+                <h4 style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Choose CSV or Excel Spreadsheet</h4>
+                <p style="font-size: 12.5px; color: var(--text-muted);">Click to browse or drag and drop .csv, .xlsx, .xls</p>
+                <input type="file" id="importFileInput" accept=".csv, .xlsx, .xls" style="display: none;" onchange="handleFileSelect(event)">
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">
+                <span>Need formatting reference?</span>
+                <a href="{{ url_for('imports.download_template_csv') }}" style="color: var(--brand-red); font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                    <i data-lucide="download" class="icon-sm" aria-hidden="true"></i>
+                    <span>Download Sample CSV Template</span>
+                </a>
+            </div>
+
+            <div id="importLoading" style="display: none; text-align: center; padding: 20px;">
+                <div style="font-size: 13.5px; font-weight: 600; color: var(--text-secondary);">Validating spreadsheet rows... please wait.</div>
+            </div>
+        </div>
+
+        <!-- Step 2: Validation Preview Staging -->
+        <div id="importStepStaging" style="display: none;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                <div style="background: #E8F5E9; border: 1px solid #C8E6C9; padding: 12px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 11px; font-weight: 700; color: #2E7D32;">VALID ROWS TO COMMIT</div>
+                    <div id="validRowCount" style="font-size: 22px; font-weight: 800; color: #2E7D32;">0</div>
+                </div>
+                <div style="background: #FFEBEE; border: 1px solid #FFCDD2; padding: 12px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 11px; font-weight: 700; color: #C62828;">INVALID ROWS FLAGGED</div>
+                    <div id="invalidRowCount" style="font-size: 22px; font-weight: 800; color: #C62828;">0</div>
+                </div>
+            </div>
+
+            <div id="invalidRowsContainer" style="display: none; max-height: 140px; overflow-y: auto; background: #FFF3F3; border: 1px solid #FFCDD2; border-radius: 8px; padding: 10px; margin-bottom: 16px; font-size: 12px;">
+                <strong style="color: #C62828; display: block; margin-bottom: 4px;">Row Validation Errors:</strong>
+                <ul id="invalidRowsList" style="padding-left: 18px; color: #555;"></ul>
+            </div>
+
+            <div style="max-height: 180px; overflow-y: auto; border: 1px solid var(--border-light); border-radius: 8px; margin-bottom: 18px;">
+                <table class="data-table" style="font-size: 12px;">
+                    <thead>
+                        <tr>
+                            <th>DATE</th>
+                            <th>CUSTOMER</th>
+                            <th>FLAVOR</th>
+                            <th>QTY</th>
+                            <th>AMOUNT</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stagingPreviewBody"></tbody>
+                </table>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button type="button" class="btn btn-secondary" onclick="resetImportModal()" style="flex: 1; justify-content: center;">
+                    Upload Different File
+                </button>
+                <button type="button" id="btnConfirmImport" class="btn btn-primary-green" onclick="commitImportBatch()" style="flex: 1; justify-content: center;">
+                    <i data-lucide="check" class="icon-sm" aria-hidden="true"></i>
+                    <span>Confirm & Save Valid Rows</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Delete Modal Logic
+    function openDeleteModal(saleId, formattedId, dateStr, customer, flavor, qty, amount) {
+        document.getElementById('deleteForm').action = '/sales/delete/' + saleId;
+        document.getElementById('delModalIdBadge').textContent = formattedId;
+        document.getElementById('delModalDate').textContent = dateStr;
+        document.getElementById('delModalCustomer').textContent = customer;
+        document.getElementById('delModalFlavor').textContent = flavor;
+        document.getElementById('delModalQty').textContent = qty + ' packs';
+        document.getElementById('delModalAmount').textContent = amount;
+        document.getElementById('deleteModal').classList.add('active');
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.remove('active');
+    }
+
+    // Keyboard support for Delete modal
+    document.addEventListener('keydown', function(e) {
+        const delModal = document.getElementById('deleteModal');
+        if (delModal.classList.contains('active')) {
+            if (e.key === 'Escape') closeDeleteModal();
+        }
+    });
+
+    // Import Modal Logic
+    function openImportModal() {
+        document.getElementById('importModal').classList.add('active');
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    function closeImportModal() {
+        document.getElementById('importModal').classList.remove('active');
+        resetImportModal();
+    }
+
+    function resetImportModal() {
+        document.getElementById('importStepUpload').style.display = 'block';
+        document.getElementById('importStepStaging').style.display = 'none';
+        document.getElementById('importLoading').style.display = 'none';
+        document.getElementById('importFileInput').value = '';
+    }
+
+    function handleFileSelect(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        document.getElementById('importLoading').style.display = 'block';
+
+        fetch('/import/validate', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('importLoading').style.display = 'none';
+            if (!data.success) {
+                alert('Error: ' + data.error);
+                return;
+            }
+
+            document.getElementById('importStepUpload').style.display = 'none';
+            document.getElementById('importStepStaging').style.display = 'block';
+
+            document.getElementById('validRowCount').textContent = data.valid_count;
+            document.getElementById('invalidRowCount').textContent = data.invalid_count;
+
+            // Render Preview Table
+            const tbody = document.getElementById('stagingPreviewBody');
+            tbody.innerHTML = '';
+            data.valid_rows.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${r.sale_date}</td>
+                    <td><strong>${r.customer_name}</strong></td>
+                    <td>${r.flavor_name}</td>
+                    <td>${r.quantity}</td>
+                    <td style="color: var(--brand-green); font-weight: 700;">₱${parseFloat(r.amount_paid).toFixed(2)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Render Errors if any
+            const errList = document.getElementById('invalidRowsList');
+            const errContainer = document.getElementById('invalidRowsContainer');
+            errList.innerHTML = '';
+            if (data.invalid_count > 0) {
+                errContainer.style.display = 'block';
+                data.invalid_rows.forEach(err => {
+                    const li = document.createElement('li');
+                    li.textContent = `Row ${err.row_number}: ${err.errors.join('; ')}`;
+                    errList.appendChild(li);
+                });
+            } else {
+                errContainer.style.display = 'none';
+            }
+
+            const confirmBtn = document.getElementById('btnConfirmImport');
+            if (data.valid_count === 0) {
+                confirmBtn.disabled = true;
+                confirmBtn.style.opacity = '0.5';
+            } else {
+                confirmBtn.disabled = false;
+                confirmBtn.style.opacity = '1';
+            }
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        })
+        .catch(err => {
+            document.getElementById('importLoading').style.display = 'none';
+            alert('Upload failed: ' + err);
+        });
+    }
+
+    function commitImportBatch() {
+        const btn = document.getElementById('btnConfirmImport');
+        btn.textContent = 'Saving records...';
+        btn.disabled = true;
+
+        fetch('/import/commit', {
+            method: 'POST'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Successfully imported ${data.imported_count} sales records!`);
+                window.location.reload();
+            } else {
+                alert('Commit failed: ' + data.error);
+                btn.textContent = 'Confirm & Save Valid Rows';
+                btn.disabled = false;
+            }
+        })
+        .catch(err => {
+            alert('Error: ' + err);
+            btn.textContent = 'Confirm & Save Valid Rows';
+            btn.disabled = false;
+        });
+    }
+</script>
+{% endblock %}

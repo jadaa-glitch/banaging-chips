@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Record {{ sale.formatted_id }} — Banaging Chips{% endblock %}
+
+{% block content %}
+
+<!-- Header & Breadcrumbs -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <a href="{{ url_for('sales.records') }}" style="color: var(--text-secondary); text-decoration: none; font-size: 13.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+        <i data-lucide="arrow-left" class="icon-sm" aria-hidden="true"></i>
+        <span>Back to Records</span>
+    </a>
+    <span class="badge-tag" style="background: #FCE8E8; color: var(--brand-red);">Audit Mode Active • Version 1.0</span>
+</div>
+
+<div class="page-header-row" style="margin-bottom: 20px;">
+    <div style="display: flex; align-items: center; gap: 14px;">
+        <h1 class="page-title">Edit Sales Record</h1>
+        <span style="background: var(--brand-gold); color: #1F1514; font-size: 13px; font-weight: 700; padding: 4px 12px; border-radius: var(--radius-pill); display: inline-flex; align-items: center; gap: 6px;">
+            <i data-lucide="pencil" class="icon-sm" aria-hidden="true"></i>
+            <span>Editing: {{ sale.formatted_id }}</span>
+        </span>
+    </div>
+
+    <!-- Batch Reference Card -->
+    <div style="background: #FFF; border: 1px solid var(--border-light); border-radius: 14px; padding: 10px 18px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow-card);">
+        <div style="width: 32px; height: 32px; border-radius: 8px; background: #FFF8E6; color: #D4880E; display: flex; align-items: center; justify-content: center;" aria-hidden="true">
+            <i data-lucide="layers" class="icon-md"></i>
+        </div>
+        <div>
+            <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Batch Reference</div>
+            <div style="font-size: 16px; font-weight: 800; color: var(--text-primary);">{{ sale.batch_reference or 'BATCH-2025-05B' }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="form-card">
+    <!-- Audit Callout -->
+    <div style="background: #FAF5F0; border: 1px solid var(--border-light); border-radius: 12px; padding: 14px 18px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #FDE8E8; color: var(--brand-red); display: flex; align-items: center; justify-content: center;" aria-hidden="true">
+                <i data-lucide="shield-alert" class="icon-md"></i>
+            </div>
+            <div>
+                <strong style="font-size: 13.5px; color: var(--text-primary);">Original Transaction Logged</strong>
+                <span style="font-size: 12px; color: #D4880E;">• Initial entry immutable</span>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                    Record created on {{ sale.created_at }} by <strong>{{ sale.cashier_name }}</strong> (Cashier POS #1)
+                </div>
+            </div>
+        </div>
+        <span class="badge-tag green">Synced</span>
+    </div>
+
+    <form method="POST" action="{{ url_for('sales.edit', sale_id=sale.sale_id) }}">
+        <!-- Date & Customer -->
+        <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; margin-bottom: 20px;">
+            <div class="form-group">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                    <label class="form-label" style="margin: 0;">Transaction Date</label>
+                    <span style="font-size: 11px; color: var(--text-muted);">Required</span>
+                </div>
+                <input type="date" name="transaction_date" class="form-input" value="{{ sale.sale_date }}" required>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Philippine Standard Time</div>
+            </div>
+
+            <div class="form-group">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                    <label class="form-label" style="margin: 0;">Customer / Buyer Name</label>
+                    <span style="font-size: 11px; color: var(--text-muted);">Retail / Wholesale</span>
+                </div>
+                <input type="text" name="customer_name" class="form-input" value="{{ sale.customer_name }}" required>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Verified regular walk-in patron</div>
+            </div>
+        </div>
+
+        <!-- Flavor Variety -->
+        <div class="form-group" style="margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <label class="form-label" style="margin: 0;">Chip Flavor Variety</label>
+                <span class="badge-tag" style="background: #FFF8E6; color: #D4880E;">Current: {{ sale.display_name }}</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+                {% for p in products %}
+                <label class="flavor-select-card {% if p.product_id == sale.product_id %}selected{% endif %}" style="padding: 12px 14px; cursor: pointer;">
+                    <input type="radio" name="product_id" value="{{ p.product_id }}" {% if p.product_id == sale.product_id %}checked{% endif %} style="display: none;" onchange="updateEditFlavor(this, '{{ p.unit_price }}')">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="flavor-dot" style="background: {{ p.badge_color }};"></span>
+                        <div>
+                            <div style="font-size: 13.5px; font-weight: 700;">{{ p.flavor_name }}</div>
+                            <div style="font-size: 10.5px; color: var(--text-muted);">{{ p.description }}</div>
+                        </div>
+                    </div>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Quantity, Amount, Payment -->
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr 1.2fr; gap: 16px; margin-bottom: 24px;">
+            <div class="form-group">
+                <label class="form-label">Quantity (Packs)</label>
+                <input type="number" id="editQty" name="quantity" class="form-input" value="{{ sale.quantity }}" min="1" oninput="recalcEditAmount()" required>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Unit Base: ₱45.00 / pack</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Amount Paid</label>
+                <div style="background: #FDF4F0; border: 1px solid var(--border-input); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 20px; font-weight: 800; color: var(--brand-red);" id="editAmountDisplay">
+                    {{ sale.amount_paid | currency }}
+                </div>
+                <div style="font-size: 11px; color: var(--brand-green); margin-top: 4px; font-weight: 600; display: flex; align-items: center; gap: 4px;" id="editFormula">
+                    <i data-lucide="check" class="icon-sm" style="width: 12px; height: 12px;" aria-hidden="true"></i>
+                    <span>Balanced: {{ sale.quantity }} × ₱45</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Payment Method</label>
+                <select name="payment_method" class="form-select">
+                    <option value="Cash on Hand" {% if sale.payment_method == 'Cash on Hand' %}selected{% endif %}>Cash on Hand (Drawer #01 Received)</option>
+                    <option value="GCash Transfer" {% if sale.payment_method == 'GCash Transfer' %}selected{% endif %}>GCash Transfer</option>
+                </select>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Drawer #01 Received</div>
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="form-group" style="margin-bottom: 28px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                <label class="form-label" style="margin: 0;">Transaction Notes & Packaging Directives</label>
+                <span style="font-size: 11px; color: var(--text-muted);">Optional remark</span>
+            </div>
+            <textarea name="notes" class="form-textarea" rows="2">{{ sale.notes or '' }}</textarea>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Included in delivery / bagging receipt</div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border-light); padding-top: 20px;">
+            <a href="{{ url_for('sales.records') }}" class="btn btn-secondary">
+                <span>Cancel</span>
+            </a>
+            <button type="submit" class="btn btn-primary-red">
+                <i data-lucide="save" class="icon-sm" aria-hidden="true"></i>
+                <span>Update Record</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let unitPrice = 45.00;
+
+    function updateEditFlavor(radio, price) {
+        document.querySelectorAll('.flavor-select-card').forEach(c => c.classList.remove('selected'));
+        radio.closest('.flavor-select-card').classList.add('selected');
+        unitPrice = parseFloat(price) || 45.00;
+        recalcEditAmount();
+    }
+
+    function recalcEditAmount() {
+        const qty = parseInt(document.getElementById('editQty').value) || 1;
+        const total = (qty * unitPrice).toFixed(2);
+        document.getElementById('editAmountDisplay').textContent = '₱ ' + parseFloat(total).toLocaleString('en-US', { minimumFractionDigits: 2 });
+        document.getElementById('editFormula').innerHTML = `
+            <i data-lucide="check" class="icon-sm" style="width: 12px; height: 12px;" aria-hidden="true"></i>
+            <span>Balanced: ${qty} × ₱${unitPrice.toFixed(0)}</span>
+        `;
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Add Sales Record — Banaging Chips{% endblock %}
+
+{% block content %}
+
+<!-- Header & Breadcrumb -->
+<div style="margin-bottom: 20px;">
+    <a href="{{ url_for('sales.records') }}" style="color: var(--text-secondary); text-decoration: none; font-size: 13.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+        <i data-lucide="arrow-left" class="icon-sm" aria-hidden="true"></i>
+        <span>Back to Records</span>
+    </a>
+</div>
+
+<div class="page-header-row" style="margin-bottom: 20px;">
+    <h1 class="page-title">Add Sales Record</h1>
+    <!-- Today's Total Batches Card -->
+    <div style="background: #FFF; border: 1px solid var(--border-light); border-radius: 14px; padding: 12px 20px; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow-card);">
+        <div style="width: 36px; height: 36px; border-radius: 10px; background: #FFF8E6; color: #D4880E; display: flex; align-items: center; justify-content: center;" aria-hidden="true">
+            <i data-lucide="receipt" class="icon-md"></i>
+        </div>
+        <div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Today's Total Batches</div>
+            <div style="font-size: 20px; font-weight: 800; color: var(--text-primary);">{{ today_total | currency }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="form-card">
+    <form method="POST" action="{{ url_for('sales.add') }}" id="addSaleForm">
+        <!-- Section 1: Basic Info & Customer -->
+        <div class="form-section">
+            <div class="section-label">
+                <i data-lucide="calendar" class="icon-sm" aria-hidden="true"></i>
+                <span>Basic Info & Customer</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 16px;">
+                <div class="form-group">
+                    <label class="form-label">Transaction Date *</label>
+                    <input type="date" name="transaction_date" class="form-input" value="{{ today_str }}" required>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Default set to current operating date</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Customer Name *</label>
+                    <input type="text" name="customer_name" class="form-input" placeholder="e.g. Juan Dela Cruz" required>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Registered or walk-in patron</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Banana Chip Flavor -->
+        <div class="form-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div class="section-label" style="margin-bottom: 0;">
+                    <i data-lucide="layers" class="icon-sm" aria-hidden="true"></i>
+                    <span>Banana Chip Flavor *</span>
+                </div>
+                <span class="badge-tag">Standard 150g Retail Bag</span>
+            </div>
+
+            <div class="flavor-selection-grid">
+                {% for p in products %}
+                <div class="flavor-select-card {% if loop.first %}selected{% endif %}" onclick="selectFlavor(this, '{{ p.product_id }}', '{{ p.unit_price }}')">
+                    <div class="flavor-card-info">
+                        <span class="flavor-dot" style="background: {{ p.badge_color or '#F5A623' }};"></span>
+                        <div>
+                            <div class="flavor-name-title">{{ p.display_name }}</div>
+                            <div class="flavor-sub-desc">{{ p.description }}</div>
+                        </div>
+                    </div>
+                    <span class="flavor-price-pill">{{ p.unit_price | currency }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            <!-- Hidden input for selected product_id -->
+            <input type="hidden" name="product_id" id="selectedProductId" value="{{ products[0].product_id if products else 1 }}">
+        </div>
+
+        <!-- Section 3: Quantity & Amount Payable -->
+        <div class="form-section">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <!-- Quantity Stepper -->
+                <div class="form-group">
+                    <label class="form-label">Quantity (packs) *</label>
+                    <div class="stepper-box">
+                        <button type="button" class="stepper-btn" onclick="adjustQty(-1)" aria-label="Decrease quantity">−</button>
+                        <input type="number" name="quantity" id="qtyInput" class="stepper-input" value="10" min="1" max="1000" onchange="calculateTotal()" aria-label="Quantity">
+                        <button type="button" class="stepper-btn" onclick="adjustQty(1)" aria-label="Increase quantity">+</button>
+                    </div>
+                    <div class="quick-pills">
+                        <span style="font-size: 11px; color: var(--text-muted); margin-right: 4px;">Quick:</span>
+                        <button type="button" class="quick-pill-btn" onclick="setQty(5)">5</button>
+                        <button type="button" class="quick-pill-btn" onclick="setQty(10)">10</button>
+                        <button type="button" class="quick-pill-btn" onclick="setQty(25)">25</button>
+                        <button type="button" class="quick-pill-btn" onclick="setQty(50)">50</button>
+                    </div>
+                </div>
+
+                <!-- Auto-computed Amount -->
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label class="form-label" style="margin-bottom: 0;">Amount Payable (₱)</label>
+                        <span class="badge-tag green" style="font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
+                            <i data-lucide="lock" class="icon-sm" style="width: 12px; height: 12px;" aria-hidden="true"></i>
+                            <span>Locked</span>
+                        </span>
+                    </div>
+                    <div style="background: #FDF6F2; border: 1px solid var(--border-input); border-radius: var(--radius-sm); padding: 10px 16px; height: 48px; display: flex; align-items: center;">
+                        <span id="displayTotal" style="font-size: 24px; font-weight: 800; color: var(--brand-green);">₱ 450.00</span>
+                    </div>
+                    <div id="calcFormula" style="font-size: 11.5px; color: var(--brand-green); margin-top: 6px; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                        <i data-lucide="check" class="icon-sm" style="width: 12px; height: 12px;" aria-hidden="true"></i>
+                        <span>Auto-computed: 10 packs × ₱45.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: Payment Method -->
+        <div class="form-section">
+            <label class="form-label">Payment Method *</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <label id="paymentCashCard" style="border: 1px solid var(--brand-red); background: var(--brand-red); color: #FFF; padding: 14px 18px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font-weight: 700; font-size: 14px;">
+                    <input type="radio" name="payment_method" value="Cash on Hand" checked style="display: none;" onchange="updatePaymentStyle(this)">
+                    <i data-lucide="banknote" class="icon-sm" aria-hidden="true"></i>
+                    <span>Cash on Hand</span>
+                </label>
+                <label id="paymentGcashCard" style="border: 1px solid var(--border-input); background: #FFF; color: var(--text-primary); padding: 14px 18px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font-weight: 700; font-size: 14px;">
+                    <input type="radio" name="payment_method" value="GCash Transfer" style="display: none;" onchange="updatePaymentStyle(this)">
+                    <i data-lucide="smartphone" class="icon-sm" aria-hidden="true"></i>
+                    <span>GCash Transfer</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Section 5: Notes -->
+        <div class="form-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label class="form-label" style="margin-bottom: 0;">Optional Notes / Remarks</label>
+                <span style="font-size: 11px; color: var(--text-muted);">Max 200 chars</span>
+            </div>
+            <textarea name="notes" class="form-textarea" rows="2" maxlength="200" placeholder="e.g. Bulk order for pasalubong, repack into cardboard carrier box"></textarea>
+        </div>
+
+        <!-- Form Actions -->
+        <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border-light); padding-top: 20px;">
+            <a href="{{ url_for('sales.records') }}" class="btn btn-secondary">
+                <span>Cancel</span>
+            </a>
+            <button type="submit" class="btn btn-primary-green">
+                <i data-lucide="check" class="icon-sm" aria-hidden="true"></i>
+                <span>Save Record</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentUnitPrice = 45.00;
+
+    function selectFlavor(cardElement, productId, unitPrice) {
+        document.querySelectorAll('.flavor-select-card').forEach(c => c.classList.remove('selected'));
+        cardElement.classList.add('selected');
+        document.getElementById('selectedProductId').value = productId;
+        currentUnitPrice = parseFloat(unitPrice) || 45.00;
+        calculateTotal();
+    }
+
+    function adjustQty(delta) {
+        const input = document.getElementById('qtyInput');
+        let val = parseInt(input.value) || 1;
+        val = Math.max(1, val + delta);
+        input.value = val;
+        calculateTotal();
+    }
+
+    function setQty(val) {
+        document.getElementById('qtyInput').value = val;
+        calculateTotal();
+    }
+
+    function calculateTotal() {
+        const qty = parseInt(document.getElementById('qtyInput').value) || 1;
+        const total = (qty * currentUnitPrice).toFixed(2);
+        document.getElementById('displayTotal').textContent = '₱ ' + parseFloat(total).toLocaleString('en-US', { minimumFractionDigits: 2 });
+        document.getElementById('calcFormula').innerHTML = `
+            <i data-lucide="check" class="icon-sm" style="width: 12px; height: 12px;" aria-hidden="true"></i>
+            <span>Auto-computed: ${qty} packs × ₱${currentUnitPrice.toFixed(2)}</span>
+        `;
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    function updatePaymentStyle(radio) {
+        const cashCard = document.getElementById('paymentCashCard');
+        const gcashCard = document.getElementById('paymentGcashCard');
+        if (radio.value === 'Cash on Hand') {
+            cashCard.style.background = 'var(--brand-red)';
+            cashCard.style.color = '#FFF';
+            cashCard.style.borderColor = 'var(--brand-red)';
+            gcashCard.style.background = '#FFF';
+            gcashCard.style.color = 'var(--text-primary)';
+            gcashCard.style.borderColor = 'var(--border-input)';
+        } else {
+            gcashCard.style.background = '#1565C0';
+            gcashCard.style.color = '#FFF';
+            gcashCard.style.borderColor = '#1565C0';
+            cashCard.style.background = '#FFF';
+            cashCard.style.color = 'var(--text-primary)';
+            cashCard.style.borderColor = 'var(--border-input)';
+        }
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+</script>
+{% endblock %}

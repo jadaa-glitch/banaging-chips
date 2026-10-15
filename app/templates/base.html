@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Banaging Chips — Crispy Delight BI & Sales{% endblock %}</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}?v=2">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js for BI Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <header class="top-navbar">
+        <a href="{{ url_for('dashboard.index') }}" class="brand-section">
+            <img src="{{ url_for('static', filename='images/logo.png') }}?v=2" alt="Banaging Chips Logo" class="brand-logo-img">
+            <div class="brand-titles">
+                <span class="brand-sub">CRISPY DELIGHT</span>
+                <span class="brand-main">Banaging Chips</span>
+                <span class="brand-tag">E & E BANAGING • SALES RECORD</span>
+            </div>
+        </a>
+
+        <nav class="nav-links" aria-label="Main Navigation">
+            <a href="{{ url_for('dashboard.index') }}" class="nav-link-item {% if active_tab == 'dashboard' %}active{% endif %}">Dashboard</a>
+            <a href="{{ url_for('sales.records') }}" class="nav-link-item {% if active_tab == 'records' %}active{% endif %}">Records</a>
+            <a href="{{ url_for('sales.add') }}" class="nav-link-item {% if active_tab == 'add_record' %}active{% endif %}">Add Record</a>
+            <a href="{{ url_for('history.deleted_records') }}" class="nav-link-item {% if active_tab == 'deleted_records' %}active{% endif %}">Deleted Records</a>
+        </nav>
+
+        <div class="nav-user-section">
+            {% if session.get('user_id') %}
+            <div class="user-badge">
+                <div class="user-avatar" aria-hidden="true">
+                    {{ session.get('full_name', 'DJ')[:2].upper() }}
+                </div>
+                <div class="user-greeting">
+                    Hello, <strong>{{ session.get('full_name', 'Daniella Jaralve') }}</strong>
+                </div>
+            </div>
+            <a href="{{ url_for('auth.logout') }}" class="btn-logout" title="Sign out" aria-label="Sign out">
+                <i data-lucide="log-out" class="icon-sm" aria-hidden="true"></i>
+                <span>Logout</span>
+            </a>
+            {% else %}
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary-red">Login</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Flash message alerts -->
+    <div style="max-width: 1440px; margin: 16px auto 0; padding: 0 32px;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div style="padding: 12px 18px; border-radius: 12px; margin-bottom: 12px; font-size: 13.5px; font-weight: 600; display: flex; align-items: center; justify-content: space-between;
+                        {% if category == 'success' %}background: #E8F5E9; color: #2E7D32; border: 1px solid #C8E6C9;
+                        {% elif category == 'danger' %}background: #FFEBEE; color: #C62828; border: 1px solid #FFCDD2;
+                        {% elif category == 'warning' %}background: #FFF8E1; color: #F57F17; border: 1px solid #FFE082;
+                        {% else %}background: #E3F2FD; color: #1565C0; border: 1px solid #BBDEFB;{% endif %}">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="{% if category == 'success' %}check-circle-2{% elif category == 'danger' %}alert-circle{% else %}info{% endif %}" class="icon-sm" aria-hidden="true"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                        <button onclick="this.parentElement.remove()" style="background: none; border: none; font-size: 16px; cursor: pointer; color: inherit; display: flex; align-items: center;" aria-label="Dismiss alert">
+                            <i data-lucide="x" class="icon-sm" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main View Content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        © 2025 E & E Banaging Chips - Crispy Delight. Internal Sales Recording System. All rights reserved.
+    </footer>
+
+    <script>
+        // Initialize all Lucide icons on page
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

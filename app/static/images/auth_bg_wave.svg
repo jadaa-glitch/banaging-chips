@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 1024" preserveAspectRatio="none">
+    <!-- Vibrant Brand Gold Background -->
+    <rect width="1440" height="1024" fill="#FFC322"/>
+    
+    <!-- Top-left sun accents / organic circles -->
+    <circle cx="140" cy="140" r="320" fill="#FFCE42" opacity="0.5"/>
+    <circle cx="120" cy="110" r="220" fill="#FFD868" opacity="0.35"/>
+    
+    <!-- Elegant Organic Curved White Sweep -->
+    <path d="M 810,0 C 710,140 650,340 670,520 C 690,700 740,820 860,1024 L 1440,1024 L 1440,0 Z" fill="#FFFFFF"/>
+</svg>

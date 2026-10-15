@@ -1,0 +1,466 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — Banaging Chips BI{% endblock %}
+
+{% block content %}
+
+<!-- Header Row -->
+<div class="page-header-row">
+    <h1 class="page-title">Dashboard</h1>
+    <div class="header-action-group">
+        <a href="{{ url_for('sales.records') }}" class="btn btn-outline-white">
+            <i data-lucide="clipboard-list" class="icon-sm" aria-hidden="true"></i>
+            <span>View Records</span>
+        </a>
+        <a href="{{ url_for('sales.add') }}" class="btn btn-primary-green">
+            <i data-lucide="plus" class="icon-sm" aria-hidden="true"></i>
+            <span>Add New Record</span>
+        </a>
+    </div>
+</div>
+
+<!-- 4 Summary KPI Cards -->
+<div class="kpi-grid">
+    <!-- Card 1: Total Sales -->
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <span class="kpi-title">TOTAL SALES (₱)</span>
+            <div class="kpi-icon-wrap" style="background: #FEF0EA; color: #E64A19;" aria-hidden="true">
+                <i data-lucide="tag" class="icon-md"></i>
+            </div>
+        </div>
+        <div class="kpi-value brand-colored">{{ metrics.total_revenue | currency }}</div>
+        <div class="kpi-subtext">
+            {% if metrics.has_comparison_data %}
+                <span class="kpi-trend-pill {% if metrics.growth_rate < 0 %}negative{% endif %}">
+                    <i data-lucide="{% if metrics.growth_rate >= 0 %}trending-up{% else %}trending-down{% endif %}" style="width: 12px; height: 12px;" aria-hidden="true"></i>
+                    <span>{% if metrics.growth_rate >= 0 %}+{% endif %}{{ metrics.growth_rate }}%</span>
+                </span>
+                <span>vs last month</span>
+            {% else %}
+                <span class="kpi-neutral-pill">No prior month comparison</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Card 2: Total Quantity Sold -->
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <span class="kpi-title">TOTAL QUANTITY SOLD</span>
+            <div class="kpi-icon-wrap" style="background: #FFF8E6; color: #D4880E;" aria-hidden="true">
+                <i data-lucide="package" class="icon-md"></i>
+            </div>
+        </div>
+        <div class="kpi-value">{{ metrics.total_quantity | number }} <span style="font-size: 17px; font-weight: 500; color: var(--text-secondary);">packs</span></div>
+        <div class="kpi-subtext">
+            {% if metrics.total_quantity > 0 %}
+                <span>{{ metrics.batch_target_pct }}% of batch target</span>
+            {% else %}
+                <span>0% of batch target</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Card 3: Transactions -->
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <span class="kpi-title">TRANSACTIONS</span>
+            <div class="kpi-icon-wrap" style="background: #E8F5E9; color: #2E7D32;" aria-hidden="true">
+                <i data-lucide="receipt" class="icon-md"></i>
+            </div>
+        </div>
+        <div class="kpi-value">{{ metrics.total_transactions }} <span style="font-size: 17px; font-weight: 500; color: var(--text-secondary);">orders</span></div>
+        <div class="kpi-subtext">
+            <span>Avg. {{ metrics.avg_packs_per_order }} packs / order</span>
+        </div>
+    </div>
+
+    <!-- Card 4: Top-Selling Flavor -->
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <span class="kpi-title">TOP-SELLING FLAVOR</span>
+            <div class="kpi-icon-wrap" style="background: #FFF9E6; color: #F5A623;" aria-hidden="true">
+                <i data-lucide="star" class="icon-md"></i>
+            </div>
+        </div>
+        <div class="kpi-value gold-colored" style="font-size: 24px;">{{ metrics.top_flavor_name }}</div>
+        <div class="kpi-subtext">
+            <span>{{ metrics.top_flavor_packs | number }} packs • {{ metrics.top_flavor_share }}% share</span>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 1 -->
+<div class="charts-grid">
+    <!-- Chart 1: Monthly Sales Trend -->
+    <div class="card">
+        <div class="chart-card-header">
+            <div class="chart-title-block">
+                <h3>
+                    <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--brand-red);"></span>
+                    <span>Monthly Sales Trend</span>
+                </h3>
+                <div class="chart-subtitle">Revenue progression across 2025–2026 in Philippine Peso (₱)</div>
+            </div>
+            <span class="badge-tag" style="color: var(--brand-red);">Monthly Revenue (₱)</span>
+        </div>
+
+        {% if metrics.has_monthly_data %}
+        <div style="height: 260px; position: relative;">
+            <canvas id="monthlyTrendChart"></canvas>
+        </div>
+        {% else %}
+        <div class="chart-empty-state" style="height: 260px;">
+            <i data-lucide="trending-up" class="icon-xl" aria-hidden="true"></i>
+            <p>No sales data for this period</p>
+        </div>
+        {% endif %}
+
+        <div class="chart-footer">
+            <span>YTD Total: <strong>{{ metrics.ytd_total | currency }}</strong></span>
+        </div>
+    </div>
+
+    <!-- Chart 2: Sales by Flavor -->
+    <div class="card">
+        <div class="chart-card-header">
+            <div class="chart-title-block">
+                <h3>
+                    <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--brand-gold);"></span>
+                    <span>Sales by Flavor</span>
+                </h3>
+                <div class="chart-subtitle">Revenue contribution per flavor (₱45 per 150g pack)</div>
+            </div>
+            <span class="badge-tag">4 Flavor Variants</span>
+        </div>
+
+        {% if metrics.total_quantity > 0 %}
+        <div style="height: 220px; position: relative;">
+            <canvas id="flavorBarChart"></canvas>
+        </div>
+        <!-- 4 mini stat boxes -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px;">
+            {% for f in metrics.flavor_stats %}
+            <div style="background: #FAF5F0; border-radius: 8px; padding: 8px 10px; text-align: center;">
+                <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Packs</div>
+                <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">{{ f.total_packs | number }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="chart-empty-state" style="height: 220px;">
+            <i data-lucide="bar-chart-2" class="icon-xl" aria-hidden="true"></i>
+            <p>No sales data for this period</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Charts Row 2 -->
+<div class="charts-grid">
+    <!-- Chart 3: Flavor Share (%) -->
+    <div class="card">
+        <div class="chart-card-header">
+            <div class="chart-title-block">
+                <h3>
+                    <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--brand-green);"></span>
+                    <span>Flavor Share (%)</span>
+                </h3>
+                <div class="chart-subtitle">Share of total {{ metrics.total_quantity | number }} packs sold by flavor variant</div>
+            </div>
+            <span class="badge-tag green">100% Accounted</span>
+        </div>
+
+        {% if metrics.total_quantity > 0 %}
+        <div style="display: flex; align-items: center; justify-content: space-around; gap: 20px; height: 230px;">
+            <div style="width: 190px; height: 190px; position: relative;">
+                <canvas id="flavorDonutChart"></canvas>
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none;">
+                    <div style="font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Total Packs</div>
+                    <div style="font-size: 18px; font-weight: 800; color: var(--text-primary);">{{ metrics.total_quantity | number }}</div>
+                </div>
+            </div>
+            <!-- Legend List -->
+            <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
+                {% for f in metrics.flavor_stats %}
+                <div style="display: flex; align-items: center; justify-content: space-between; background: #FAF5F0; padding: 7px 12px; border-radius: 8px; font-size: 12.5px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="width: 10px; height: 10px; border-radius: 50%; background: {{ f.badge_color or '#F5A623' }};"></span>
+                        <strong style="color: var(--text-primary);">{{ f.flavor_name }}</strong>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-weight: 700; color: var(--text-primary);">
+                            {% if metrics.total_quantity > 0 %}{{ (f.total_packs / metrics.total_quantity * 100) | round(1) }}%{% else %}0%{% endif %}
+                        </span>
+                        <span style="color: var(--text-muted); font-size: 11px;">({{ f.total_packs }} pk)</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="chart-empty-state" style="height: 230px;">
+            <i data-lucide="pie-chart" class="icon-xl" aria-hidden="true"></i>
+            <p>No sales data for this period</p>
+        </div>
+        {% endif %}
+
+        <div class="chart-footer">
+            <span>Standard Packaging: <strong>150g Retail Foil Pouch</strong></span>
+            {% if metrics.total_quantity > 0 %}
+                <span style="color: #D4880E; font-weight: 600;">{{ metrics.top_flavor_name }} remains top customer choice</span>
+            {% else %}
+                <span style="color: var(--text-muted);">Awaiting sales data</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Chart 4: Daily Sales (Last 14 Days) -->
+    <div class="card">
+        <div class="chart-card-header">
+            <div class="chart-title-block">
+                <h3>
+                    <span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--brand-red);"></span>
+                    <span>Daily Sales (Last 14 Days)</span>
+                </h3>
+                <div class="chart-subtitle">Daily revenue tallies in ₱ ({{ metrics.daily_date_range }})</div>
+            </div>
+            <span class="badge-tag" style="color: var(--brand-red);">Daily Revenue Total</span>
+        </div>
+
+        {% if metrics.has_daily_data %}
+        <div style="height: 230px; position: relative;">
+            <canvas id="dailySalesChart"></canvas>
+        </div>
+        {% else %}
+        <div class="chart-empty-state" style="height: 230px;">
+            <i data-lucide="calendar" class="icon-xl" aria-hidden="true"></i>
+            <p>No sales data for this period</p>
+        </div>
+        {% endif %}
+
+        <div class="chart-footer">
+            <span>14-Day Velocity: <strong>{{ metrics.fourteen_day_total | currency }} total</strong></span>
+            <span style="color: var(--text-muted); font-size: 11.5px;">Last 14 operating days</span>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Card: Recent Records -->
+<div class="card">
+    <div class="chart-card-header" style="margin-bottom: 14px;">
+        <div class="chart-title-block" style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: #FEF0EA; color: #E64A19; display: flex; align-items: center; justify-content: center;" aria-hidden="true">
+                <i data-lucide="clock" class="icon-md"></i>
+            </div>
+            <div>
+                <h3>Recent Records</h3>
+                <div class="chart-subtitle">Latest 5 sales entries recorded in the system</div>
+            </div>
+        </div>
+        <span class="badge-tag live">Live Synced</span>
+    </div>
+
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>DATE</th>
+                    <th>CUSTOMER</th>
+                    <th>FLAVOR</th>
+                    <th>QUANTITY</th>
+                    <th>AMOUNT PAID (₱)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if metrics.recent_sales %}
+                    {% for r in metrics.recent_sales %}
+                    <tr>
+                        <td style="color: var(--text-secondary); font-weight: 500;">{{ r.sale_date }}</td>
+                        <td>
+                            <div class="customer-cell">
+                                <div class="avatar-circle" aria-hidden="true">{{ r.initials }}</div>
+                                <span>{{ r.customer_name }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="flavor-badge {% if 'original' in r.flavor_name.lower() %}original{% elif 'cheese' in r.flavor_name.lower() %}cheese{% elif 'sour' in r.flavor_name.lower() %}sour-cream{% else %}bbq{% endif %}">
+                                {{ r.flavor_name }}
+                            </span>
+                        </td>
+                        <td style="font-weight: 600;">{{ r.quantity }} packs</td>
+                        <td><span class="amount-red">{{ r.amount_paid | currency }}</span></td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 32px; color: var(--text-muted);">
+                            No transactions recorded yet. Click <strong><a href="{{ url_for('sales.add') }}" style="color: var(--brand-red);">Add New Record</a></strong> to start logging sales!
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="chart-footer">
+        <span>Displaying {{ metrics.recent_sales | length }} of {{ metrics.total_transactions }} total recorded sales</span>
+        <a href="{{ url_for('sales.records') }}" style="color: var(--brand-red); font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+            <span>View All Records</span>
+            <i data-lucide="arrow-right" class="icon-sm" aria-hidden="true"></i>
+        </a>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 1. Monthly Trend Chart
+    const elMonthly = document.getElementById('monthlyTrendChart');
+    if (elMonthly) {
+        const ctxMonthly = elMonthly.getContext('2d');
+        const gradMonthly = ctxMonthly.createLinearGradient(0, 0, 0, 260);
+        gradMonthly.addColorStop(0, 'rgba(128, 20, 26, 0.25)');
+        gradMonthly.addColorStop(1, 'rgba(128, 20, 26, 0.0)');
+
+        const monthlyData = {{ metrics.monthly_series | tojson }};
+        const maxMonthly = Math.max(...monthlyData, 0);
+
+        new Chart(ctxMonthly, {
+            type: 'line',
+            data: {
+                labels: {{ metrics.month_labels | tojson }},
+                datasets: [{
+                    label: 'Monthly Revenue (₱)',
+                    data: monthlyData,
+                    borderColor: '#80141A',
+                    backgroundColor: gradMonthly,
+                    fill: true,
+                    tension: 0.35,
+                    pointBackgroundColor: '#80141A',
+                    pointBorderColor: '#FFF',
+                    pointBorderWidth: 2,
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        suggestedMax: maxMonthly > 0 ? maxMonthly * 1.15 : 1000,
+                        grace: '5%',
+                        ticks: {
+                            callback: val => '₱' + (val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val)
+                        },
+                        grid: { color: '#EFE6DF' }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    // 2. Sales by Flavor Bar Chart
+    const elFlavor = document.getElementById('flavorBarChart');
+    if (elFlavor) {
+        const ctxFlavor = elFlavor.getContext('2d');
+        const flavorRevenues = {{ metrics.flavor_revenues | tojson }};
+        const maxFlavor = Math.max(...flavorRevenues, 0);
+
+        new Chart(ctxFlavor, {
+            type: 'bar',
+            data: {
+                labels: {{ metrics.flavor_labels | tojson }},
+                datasets: [{
+                    label: 'Revenue (₱)',
+                    data: flavorRevenues,
+                    backgroundColor: ['#E5A93C', '#F39200', '#2E7D32', '#6D2B1B'],
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        suggestedMax: maxFlavor > 0 ? maxFlavor * 1.15 : 1000,
+                        grace: '5%',
+                        ticks: {
+                            callback: val => '₱' + (val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val)
+                        },
+                        grid: { color: '#EFE6DF' }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    // 3. Flavor Share Donut Chart
+    const elDonut = document.getElementById('flavorDonutChart');
+    if (elDonut) {
+        const ctxDonut = elDonut.getContext('2d');
+        new Chart(ctxDonut, {
+            type: 'doughnut',
+            data: {
+                labels: {{ metrics.flavor_labels | tojson }},
+                datasets: [{
+                    data: {{ metrics.flavor_packs | tojson }},
+                    backgroundColor: ['#E5A93C', '#F39200', '#2E7D32', '#6D2B1B'],
+                    borderWidth: 3,
+                    borderColor: '#FFF'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '72%',
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+
+    // 4. Daily Sales Bar Chart
+    const elDaily = document.getElementById('dailySalesChart');
+    if (elDaily) {
+        const ctxDaily = elDaily.getContext('2d');
+        const dailyData = {{ metrics.daily_values | tojson }};
+        const maxDaily = Math.max(...dailyData, 0);
+
+        new Chart(ctxDaily, {
+            type: 'bar',
+            data: {
+                labels: {{ metrics.daily_labels | tojson }},
+                datasets: [{
+                    data: dailyData,
+                    backgroundColor: '#80141A',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        suggestedMax: maxDaily > 0 ? maxDaily * 1.15 : 500,
+                        grace: '5%',
+                        ticks: {
+                            callback: val => '₱' + (val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val)
+                        },
+                        grid: { color: '#EFE6DF' }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal Access — Banaging Chips</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}?v=2">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            min-height: 100dvh;
+            background: radial-gradient(circle at 40% 30%, #FFF1D6 0%, #FAF5F0 50%, #F5EDE6 100%);
+            padding: 16px;
+        }
+        .login-card {
+            background: #FFFFFF;
+            border-radius: 20px;
+            box-shadow: 0 10px 32px rgba(80, 30, 20, 0.08);
+            border: 1px solid #EFE6DF;
+            width: 100%;
+            max-width: 410px;
+            padding: 24px 28px 18px;
+            text-align: center;
+        }
+        .login-brand-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            width: 100%;
+            margin: 0 auto 10px;
+        }
+        .login-logo-img {
+            width: 54px;
+            height: 54px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto 8px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        .login-brand-text {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .login-brand-text .brand-sub {
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 1.2px;
+            color: var(--brand-green);
+            background: #E8F5E9;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            display: inline-block;
+            margin-bottom: 3px;
+        }
+        .login-brand-text .brand-name {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--brand-red);
+            margin: 0 0 2px 0;
+            line-height: 1.2;
+            text-align: center;
+        }
+        .login-brand-text .brand-tag {
+            font-size: 10.5px;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-align: center;
+        }
+        .terminal-pill-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 6px;
+        }
+        .terminal-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #FEF3D6;
+            color: #925805;
+            font-size: 9.5px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            padding: 2.5px 10px;
+            border-radius: 9999px;
+            border: 1px solid #F5E1A4;
+            text-transform: uppercase;
+        }
+        .login-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--brand-red);
+            margin: 0 0 2px;
+        }
+        .login-sub {
+            font-size: 11.5px;
+            color: var(--text-secondary);
+            margin: 0 0 14px;
+        }
+        .error-banner {
+            background: #FCE8E8;
+            color: #C62828;
+            border: 1px solid #F5C6CB;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 11.5px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+        .input-group {
+            text-align: left;
+            margin-bottom: 11px;
+            position: relative;
+        }
+        .input-label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        .input-with-icon {
+            position: relative;
+        }
+        .input-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9F938E;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-input {
+            width: 100%;
+            background: #FDF4F0;
+            border: 1px solid #EADBCE;
+            border-radius: 8px;
+            padding: 9px 12px 9px 38px;
+            font-size: 13px;
+            font-family: inherit;
+            color: var(--text-primary);
+        }
+        .login-input:focus {
+            outline: none;
+            background: #FFF;
+            border-color: var(--brand-red);
+            box-shadow: 0 0 0 3px rgba(128, 20, 26, 0.1);
+        }
+        .remember-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11.5px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            text-align: left;
+        }
+        .btn-login-submit {
+            width: 100%;
+            background: var(--brand-red);
+            color: #FFF;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 9999px;
+            font-size: 13.5px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        .btn-login-submit:hover {
+            background: var(--brand-red-hover);
+            box-shadow: 0 4px 14px rgba(128, 20, 26, 0.3);
+        }
+        .toggle-pwd-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #9F938E;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+        }
+        .login-footer-auth {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #EFE6DF;
+            font-size: 10.5px;
+            color: #9F938E;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <!-- Centered Logo & Brand Name Header -->
+        <div class="login-brand-header">
+            <img src="{{ url_for('static', filename='images/logo.png') }}?v=2" alt="Banaging Chips Logo" class="login-logo-img">
+            <div class="login-brand-text">
+                <span class="brand-sub">CRISPY DELIGHT</span>
+                <h2 class="brand-name">E & E BANAGING CHIPS</h2>
+                <span class="brand-tag">Banana Chips • Sales Recording System</span>
+            </div>
+        </div>
+
+        <!-- Centered Small Terminal Access Pill -->
+        <div class="terminal-pill-row">
+            <span class="terminal-pill">TERMINAL ACCESS</span>
+        </div>
+
+        <h1 class="login-title">Welcome Back</h1>
+        <p class="login-sub">Please enter your credentials to access the sales records.</p>
+
+        {% if error %}
+        <div class="error-banner">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="alert-circle" class="icon-sm" aria-hidden="true"></i>
+                <span>{{ error }}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" style="background: none; border: none; cursor: pointer; color: inherit; display: flex; align-items: center;" aria-label="Dismiss error">
+                <i data-lucide="x" class="icon-sm" aria-hidden="true"></i>
+            </button>
+        </div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('auth.login') }}">
+            <div class="input-group">
+                <div class="input-label-row">
+                    <span>Username</span>
+                    <span style="font-weight: 500; font-size: 10.5px; color: #9F938E;">Required</span>
+                </div>
+                <div class="input-with-icon">
+                    <span class="input-icon" aria-hidden="true">
+                        <i data-lucide="user" class="icon-sm"></i>
+                    </span>
+                    <input type="text" name="username" class="login-input" placeholder="e.g. daniellajaralve" value="daniellajaralve" required autofocus>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <div class="input-label-row">
+                    <span>Password</span>
+                    <a href="#" style="color: var(--brand-red); text-decoration: none; font-size: 11px;">Forgot Password?</a>
+                </div>
+                <div class="input-with-icon">
+                    <span class="input-icon" aria-hidden="true">
+                        <i data-lucide="lock" class="icon-sm"></i>
+                    </span>
+                    <input type="password" id="pwdInput" name="password" class="login-input" placeholder="••••••••••••" value="password123" required>
+                    <button type="button" class="toggle-pwd-btn" onclick="togglePassword()" aria-label="Toggle password visibility">
+                        <i id="pwdToggleIcon" data-lucide="eye" class="icon-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="remember-row">
+                <input type="checkbox" id="remember" name="remember" checked>
+                <label for="remember">Remember me on this terminal</label>
+            </div>
+
+            <button type="submit" class="btn-login-submit">
+                <span>Login</span>
+                <i data-lucide="arrow-right" class="icon-sm" aria-hidden="true"></i>
+            </button>
+        </form>
+
+        <div style="margin-top: 10px; font-size: 12px; color: var(--text-secondary);">
+            No account yet? <a href="{{ url_for('auth.register') }}" style="color: var(--brand-green); font-weight: 700; text-decoration: none;">Register</a>
+        </div>
+
+        <div class="login-footer-auth">
+            <i data-lucide="shield-check" class="icon-sm" aria-hidden="true"></i>
+            <span>Authorized Personnel & Cashiers Only • E & E Banaging Chips</span>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const pwd = document.getElementById('pwdInput');
+            const icon = document.getElementById('pwdToggleIcon');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+                icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                pwd.type = 'password';
+                icon.setAttribute('data-lucide', 'eye');
+            }
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        // Initialize icons on load
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>

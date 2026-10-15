@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Staff Account — E & E Banaging Chips</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}?v=2">
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- New Auth Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v=1">
+</head>
+<body>
+
+    <div class="auth-page-wrapper">
+        <div class="auth-inner-container">
+            
+            <!-- Left Side: Product Hero Display -->
+            <div class="auth-hero-panel">
+                <div class="auth-hero-card">
+                    <img src="{{ url_for('static', filename='images/product_hero.webp') }}" alt="Banaging Chips Crispy Delight" class="auth-hero-img">
+                </div>
+            </div>
+
+            <!-- Right Side: White Rounded Register Card with Golden Border -->
+            <div class="auth-card register-card">
+                <div class="auth-card-header">
+                    <span class="auth-brand-name">E & E BANAGING CHIPS</span>
+                    <span class="auth-brand-sub">CRISPY DELIGHT</span>
+                    <h1 class="auth-main-title">CREATE STAFF ACCOUNT</h1>
+                </div>
+
+                {% if error %}
+                <div class="auth-banner-error" role="alert">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="alert-circle" style="width: 16px; height: 16px; flex-shrink: 0;" aria-hidden="true"></i>
+                        <span>{{ error }}</span>
+                    </div>
+                    <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; cursor: pointer; color: inherit; padding: 2px;" aria-label="Dismiss error">
+                        <i data-lucide="x" style="width: 14px; height: 14px;" aria-hidden="true"></i>
+                    </button>
+                </div>
+                {% endif %}
+
+                {% if success %}
+                <div class="auth-banner-success" role="status">
+                    <i data-lucide="check-circle" style="width: 16px; height: 16px; flex-shrink: 0;" aria-hidden="true"></i>
+                    <span>{{ success }}</span>
+                </div>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('auth.register') }}" class="auth-form" novalidate>
+                    <!-- Hidden default role parameter to maintain exact backend compatibility -->
+                    <input type="hidden" name="role" value="Cashier / Sales Clerk">
+
+                    <!-- 2-Column Responsive Input Grid -->
+                    <div class="auth-grid-2">
+                        <!-- Full Name -->
+                        <div class="auth-input-group">
+                            <div class="auth-label-row">
+                                <label for="full_name" class="auth-label">Full Name</label>
+                            </div>
+                            <input type="text" id="full_name" name="full_name" class="auth-input" placeholder="Juan Dela Cruz" value="{{ request.form.get('full_name', '') }}" required autofocus autocomplete="name">
+                        </div>
+
+                        <!-- Username -->
+                        <div class="auth-input-group">
+                            <div class="auth-label-row">
+                                <label for="username" class="auth-label">Username</label>
+                                <span class="auth-tag-required">Required</span>
+                            </div>
+                            <input type="text" id="username" name="username" class="auth-input" placeholder="juandc" value="{{ request.form.get('username', '') }}" required autocomplete="username">
+                        </div>
+
+                        <!-- Email Address -->
+                        <div class="auth-input-group">
+                            <div class="auth-label-row">
+                                <label for="email" class="auth-label">Email Address</label>
+                            </div>
+                            <input type="email" id="email" name="email" class="auth-input" placeholder="juan@example.com" value="{{ request.form.get('email', '') }}" autocomplete="email">
+                        </div>
+
+                        <!-- Phone Number -->
+                        <div class="auth-input-group">
+                            <div class="auth-label-row">
+                                <label for="phone" class="auth-label">Phone Number</label>
+                            </div>
+                            <input type="tel" id="phone" name="phone" class="auth-input" placeholder="+63" value="{{ request.form.get('phone', '') }}" autocomplete="tel">
+                        </div>
+
+                        <!-- Password -->
+                        <div class="auth-input-group">
+                            <div class="auth-label-row">
+                                <label for="password" class="auth-label">Password</label>
+                            </div>
+                            <div class="auth-pwd-wrap">
+                                <input type="password" id="password" name="password" class="auth-input" placeholder="••••••••" required oninput="checkPasswordStrength(this.value)" autocomplete="new-password">
+                                <button type="button" class="auth-pwd-toggle" onclick="togglePasswordVisibility('password', 'pwdToggleIcon1')" aria-label="Show password" title="Toggle password visibility">
+                                    <i id="pwdToggleIcon1" data-lucide="eye" style="width: 18px; height: 18px;" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="auth-input-group">
+                            <div class="auth-label-row">
+                                <label for="confirm_password" class="auth-label">Confirm Password</label>
+                            </div>
+                            <div class="auth-pwd-wrap">
+                                <input type="password" id="confirm_password" name="confirm_password" class="auth-input" placeholder="••••••••" required autocomplete="new-password">
+                                <button type="button" class="auth-pwd-toggle" onclick="togglePasswordVisibility('confirm_password', 'pwdToggleIcon2')" aria-label="Show confirm password" title="Toggle password visibility">
+                                    <i id="pwdToggleIcon2" data-lucide="eye" style="width: 18px; height: 18px;" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security Strength Widget matching design reference -->
+                    <div class="auth-security-block">
+                        <div class="auth-security-row">
+                            <span>Security strength:</span>
+                            <div class="auth-strength-bars">
+                                <div id="bar1" class="auth-strength-bar bar-red"></div>
+                                <div id="bar2" class="auth-strength-bar bar-amber"></div>
+                                <div id="bar3" class="auth-strength-bar bar-green"></div>
+                            </div>
+                            <span id="strengthText" class="auth-strength-text">Strong</span>
+                        </div>
+                        <div class="auth-security-hint">
+                            At least 8 characters with a number and a symbol.
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="auth-btn-primary">
+                        <span>CREATE ACCOUNT</span>
+                    </button>
+                </form>
+
+                <!-- Switch to Login Link -->
+                <div class="auth-footer-link">
+                    <span>Already have an account?</span>
+                    <a href="{{ url_for('auth.login') }}" class="auth-switch-link">Log in</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function togglePasswordVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (!input || !icon) return;
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                input.type = 'password';
+                icon.setAttribute('data-lucide', 'eye');
+            }
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        function checkPasswordStrength(val) {
+            const b1 = document.getElementById('bar1');
+            const b2 = document.getElementById('bar2');
+            const b3 = document.getElementById('bar3');
+            const text = document.getElementById('strengthText');
+
+            if (!val || val.length === 0) {
+                b1.className = 'auth-strength-bar bar-red';
+                b2.className = 'auth-strength-bar bar-amber';
+                b3.className = 'auth-strength-bar bar-green';
+                text.innerText = 'Strong';
+                text.style.color = '#059669';
+                return;
+            }
+
+            let score = 0;
+            if (val.length >= 6) score++;
+            if (val.length >= 8) score++;
+            if (/[0-9]/.test(val) && /[^A-Za-z0-9]/.test(val)) score++;
+
+            if (score <= 1) {
+                b1.className = 'auth-strength-bar bar-red';
+                b2.className = 'auth-strength-bar';
+                b3.className = 'auth-strength-bar';
+                text.innerText = 'Weak';
+                text.style.color = '#EF4444';
+            } else if (score === 2) {
+                b1.className = 'auth-strength-bar bar-red';
+                b2.className = 'auth-strength-bar bar-amber';
+                b3.className = 'auth-strength-bar';
+                text.innerText = 'Medium';
+                text.style.color = '#D97706';
+            } else {
+                b1.className = 'auth-strength-bar bar-red';
+                b2.className = 'auth-strength-bar bar-amber';
+                b3.className = 'auth-strength-bar bar-green';
+                text.innerText = 'Strong';
+                text.style.color = '#059669';
+            }
+        }
+
+        // Initialize Lucide icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>

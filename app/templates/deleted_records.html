@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Deleted Records Archive — Banaging Chips{% endblock %}
+
+{% block content %}
+
+<!-- Header Row -->
+<div class="page-header-row">
+    <h1 class="page-title">Deleted Records</h1>
+    <div style="background: #FFF; border: 1px solid var(--border-light); border-radius: var(--radius-pill); padding: 8px 16px; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+        <i data-lucide="lock" class="icon-sm" style="color: #925805;" aria-hidden="true"></i>
+        <span>Retention Status: <strong style="color: #925805;">365-Day Mandatory Ledger</strong></span>
+    </div>
+</div>
+
+<!-- 4 Summary KPI Cards -->
+<div class="kpi-grid">
+    <!-- Card 1: Archived Entries -->
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <span class="kpi-title">Archived Entries</span>
+            <div class="kpi-icon-wrap" style="background: #FCE8E8; color: var(--brand-red);"><i data-lucide="archive" class="icon-md" aria-hidden="true"></i></div>
+        </div>
+        <div class="kpi-value brand-colored">{{ archived_count }}</div>
+        <div class="kpi-subtext">
+            <span class="kpi-trend-pill"><i data-lucide="check" class="icon-sm" aria-hidden="true" style="margin-right: 2px;"></i> 100% Accounted</span>
+        </div>
+    </div>
+
+    <!-- Card 2: Adjusted Value -->
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <span class="kpi-title">Adjusted Value</span>
+            <div class="kpi-icon-wrap" style="background: #FCE8E8; color: var(--brand-red);"><i data-lucide="banknote" class="icon-md" aria-hidden="true"></i></div>
+        </div>
+        <div class="kpi-value brand-colored">{{ adjusted_value | currency }}</div>
+        <div class="kpi-subtext">
+            <span>Gross voided sum</span>
+        </div>
+    </div>
+
+    <!-- Card 3: Reclaimed Packs -->
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <span class="kpi-title">Reclaimed Packs</span>
+            <div class="kpi-icon-wrap" style="background: #FFF8E6; color: #D4880E;"><i data-lucide="trash-2" class="icon-md" aria-hidden="true"></i></div>
+        </div>
+        <div class="kpi-value">{{ reclaimed_packs }} <span style="font-size: 16px; font-weight: 500; color: var(--text-secondary);">units</span></div>
+        <div class="kpi-subtext">
+            <span>Restocked to batch</span>
+        </div>
+    </div>
+
+    <!-- Card 4: Audited By Staff -->
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <span class="kpi-title">Audited By Staff</span>
+            <div class="kpi-icon-wrap" style="background: #E8F5E9; color: var(--brand-green);"><i data-lucide="shield-check" class="icon-md" aria-hidden="true"></i></div>
+        </div>
+        <div class="kpi-value" style="font-size: 24px;">{{ audited_staff_count }} Officers</div>
+        <div class="kpi-subtext">
+            <span>{{ officer_names }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar Card -->
+<div class="card" style="margin-bottom: 24px; padding: 18px 22px;">
+    <form method="GET" action="{{ url_for('history.deleted_records') }}">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+            <div style="flex: 1; min-width: 280px; position: relative; display: flex; align-items: center;">
+                <i data-lucide="search" class="icon-sm" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #9F938E; pointer-events: none;" aria-hidden="true"></i>
+                <input type="text" name="search" class="form-input" style="padding-left: 38px;" placeholder="Search archived records by customer, original ID, or reason..." value="{{ search }}">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <div style="background: #F8F1EB; padding: 4px; border-radius: var(--radius-pill); display: flex; gap: 4px;">
+                    <a href="{{ url_for('history.deleted_records', time='all', flavor=selected_flavor, search=search) }}" class="nav-link-item {% if time_filter == 'all' or not time_filter %}active{% endif %}" style="padding: 6px 14px; font-size: 12.5px;">All Time</a>
+                    <a href="{{ url_for('history.deleted_records', time='month', flavor=selected_flavor, search=search) }}" class="nav-link-item {% if time_filter == 'month' %}active{% endif %}" style="padding: 6px 14px; font-size: 12.5px;">This Month</a>
+                </div>
+
+                <select name="flavor" class="form-select" style="width: auto; padding: 8px 14px;" onchange="this.form.submit()">
+                    <option value="all">All Flavors</option>
+                    {% for f in all_flavors %}
+                    <option value="{{ f.product_id }}" {% if selected_flavor|string == f.product_id|string %}selected{% endif %}>{{ f.display_name }}</option>
+                    {% endfor %}
+                </select>
+
+                <a href="{{ url_for('history.export_archive_csv') }}" class="btn btn-amber" style="padding: 8px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+                    <i data-lucide="download" class="icon-sm" aria-hidden="true"></i>
+                    <span>Export Archive (CSV)</span>
+                </a>
+
+                <button type="button" onclick="window.print()" class="btn btn-outline-white" style="padding: 8px 12px; font-size: 13px; display: inline-flex; align-items: center; justify-content: center;" title="Print Report" aria-label="Print Report">
+                    <i data-lucide="printer" class="icon-sm" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Archive Table Card -->
+<div class="card" style="margin-bottom: 24px;">
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ORIGINAL ID</th>
+                    <th>TX DATE</th>
+                    <th>CUSTOMER</th>
+                    <th>FLAVOR</th>
+                    <th>QTY</th>
+                    <th>AMOUNT PAID</th>
+                    <th>DELETED BY</th>
+                    <th>DELETED AT</th>
+                    <th>AUDIT REASON</th>
+                    <th style="text-align: center;">ACTION</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if records %}
+                    {% for r in records %}
+                    <tr>
+                        <td class="id-badge">
+                            <span style="display: inline-flex; align-items: center; gap: 4px;">
+                                <i data-lucide="file-text" class="icon-sm" style="color: var(--text-muted);" aria-hidden="true"></i>
+                                {{ r.formatted_id }}
+                            </span>
+                        </td>
+                        <td style="color: var(--text-secondary);">{{ r.sale_date }}</td>
+                        <td>
+                            <div class="customer-cell">
+                                <div class="avatar-circle">{{ r.initials }}</div>
+                                <span>{{ r.customer_name }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="flavor-badge {% if 'original' in r.flavor_name.lower() %}original{% elif 'cheese' in r.flavor_name.lower() %}cheese{% elif 'sour' in r.flavor_name.lower() %}sour-cream{% else %}bbq{% endif %}">
+                                {{ r.flavor_name }}
+                            </span>
+                        </td>
+                        <td style="font-weight: 700;">{{ r.quantity }}</td>
+                        <td><span class="amount-red">{{ r.amount_paid | currency }}</span></td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <div class="avatar-circle" style="width: 22px; height: 22px; font-size: 9px; background: #FCE8E8; color: var(--brand-red);">{{ r.deleted_initials }}</div>
+                                <span style="font-size: 12.5px;">{{ r.deleted_by_name }}</span>
+                            </div>
+                        </td>
+                        <td style="font-size: 12px; color: var(--text-muted);">{{ r.deleted_at }}</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: 12.5px;">
+                                {% if 'cancelled' in r.delete_reason.lower() %}
+                                    <i data-lucide="x-circle" class="icon-sm" style="color: #C62828;" aria-hidden="true"></i>
+                                {% elif 'duplicate' in r.delete_reason.lower() %}
+                                    <i data-lucide="copy" class="icon-sm" style="color: #F57F17;" aria-hidden="true"></i>
+                                {% elif 'seal' in r.delete_reason.lower() or 'quality' in r.delete_reason.lower() %}
+                                    <i data-lucide="package-x" class="icon-sm" style="color: #2E7D32;" aria-hidden="true"></i>
+                                {% else %}
+                                    <i data-lucide="alert-circle" class="icon-sm" style="color: #8E24AA;" aria-hidden="true"></i>
+                                {% endif %}
+                                <span>{{ r.delete_reason }}</span>
+                            </div>
+                        </td>
+                        <td style="text-align: center;">
+                            <form method="POST" action="{{ url_for('history.restore', archive_id=r.archive_id) }}" style="display: inline;" onsubmit="return confirm('Restore record {{ r.formatted_id }} back to active sales ledger?');">
+                                <button type="submit" title="Restore to active sales" class="btn btn-outline-white" style="padding: 4px 10px; font-size: 11.5px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                                    <i data-lucide="rotate-ccw" class="icon-sm" aria-hidden="true"></i>
+                                    <span>Restore</span>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="10" style="text-align: center; padding: 36px; color: var(--text-muted);">
+                            No archived sales records found.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="chart-footer">
+        <span style="display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="bar-chart-2" class="icon-sm" aria-hidden="true"></i> Total Archived Transactions: <strong>{{ archived_count }} records ({{ adjusted_value | currency }} total adjusted)</strong>
+        </span>
+        <span style="font-size: 12.5px; color: var(--text-muted);">
+            Showing 1 to {{ records | length }} of {{ archived_count }} entries
+        </span>
+    </div>
+</div>
+
+<!-- Bottom Card: Deletion Breakdown by Cause -->
+<div class="card" style="max-width: 680px;">
+    <div class="chart-card-header" style="margin-bottom: 16px;">
+        <div class="chart-title-block">
+            <h3 style="display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="pie-chart" class="icon-md" style="color: var(--brand-red);" aria-hidden="true"></i>
+                <span>Deletion Breakdown by Cause</span>
+            </h3>
+        </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+        {% if cause_breakdown %}
+            {% for c in cause_breakdown %}
+            <div>
+                <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-bottom: 6px;">
+                    <span>{{ c.reason }}</span>
+                    <span>{{ c.percentage }}% ({{ c.count }})</span>
+                </div>
+                <div style="background: #FAF5F0; height: 8px; border-radius: 9999px; overflow: hidden;">
+                    <div style="background: {{ c.color }}; width: {{ c.percentage }}%; height: 100%; border-radius: 9999px;"></div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div style="font-size: 13px; color: var(--text-muted); text-align: center; padding: 12px;">
+                No deletions recorded yet.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

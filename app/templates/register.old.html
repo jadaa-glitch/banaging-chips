@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Staff Account — Banaging Chips</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}?v=2">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            min-height: 100dvh;
+            background: #FAF5F0;
+            padding: 14px;
+        }
+        .signup-card {
+            background: #FFFFFF;
+            border-radius: 20px;
+            box-shadow: 0 10px 32px rgba(80, 30, 20, 0.08);
+            border: 1px solid #EFE6DF;
+            width: 100%;
+            max-width: 460px;
+            overflow: hidden;
+            text-align: center;
+        }
+        .signup-gradient-bar {
+            height: 4px;
+            background: linear-gradient(90deg, #80141A 0%, #F5A623 50%, #237A3E 100%);
+        }
+        .signup-body {
+            padding: 18px 24px 16px;
+        }
+        .signup-brand-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            margin: 0 auto 6px;
+        }
+        .login-logo-img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto 6px;
+            border-radius: 9px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        .signup-brand-text {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .signup-brand-text .brand-sub {
+            font-size: 8.5px;
+            font-weight: 800;
+            letter-spacing: 1.2px;
+            color: var(--brand-green);
+            background: #E8F5E9;
+            padding: 2px 7px;
+            border-radius: 9999px;
+            display: inline-block;
+            margin-bottom: 2px;
+        }
+        .signup-brand-text .brand-name {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--brand-red);
+            margin: 0 0 2px 0;
+            line-height: 1.2;
+            text-align: center;
+        }
+        .signup-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--brand-red);
+            margin: 0 0 2px;
+        }
+        .signup-sub {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin: 0 0 8px;
+        }
+        .verification-callout {
+            background: #E8F5E9;
+            border: 1px solid #C8E6C9;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 11px;
+            color: #2E7D32;
+            text-align: left;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .form-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .input-group {
+            text-align: left;
+            margin-bottom: 8px;
+        }
+        .input-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 3px;
+        }
+        .input-box {
+            width: 100%;
+            background: #FDF4F0;
+            border: 1px solid #EADBCE;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 12.5px;
+            font-family: inherit;
+            color: var(--text-primary);
+        }
+        .input-box:focus {
+            outline: none;
+            background: #FFF;
+            border-color: var(--brand-green);
+            box-shadow: 0 0 0 3px rgba(35, 122, 62, 0.1);
+        }
+        .btn-signup-submit {
+            width: 100%;
+            background: var(--brand-green);
+            color: #FFF;
+            border: none;
+            padding: 9px 16px;
+            border-radius: 9999px;
+            font-size: 13.5px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s;
+            margin-top: 6px;
+        }
+        .btn-signup-submit:hover {
+            background: var(--brand-green-hover);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="signup-card">
+        <div class="signup-gradient-bar"></div>
+        <div class="signup-body">
+            <!-- Centered Brand Logo & Text -->
+            <div class="signup-brand-header">
+                <img src="{{ url_for('static', filename='images/logo.png') }}?v=2" alt="Banaging Chips Logo" class="login-logo-img">
+                <div class="signup-brand-text">
+                    <span class="brand-sub">CRISPY DELIGHT</span>
+                    <h2 class="brand-name">E & E BANAGING CHIPS</h2>
+                </div>
+            </div>
+
+            <h1 class="signup-title">Create Staff Account</h1>
+            <p class="signup-sub">Join the sales recording and management team.</p>
+
+            <div class="verification-callout">
+                <i data-lucide="shield-check" class="icon-sm" style="color: #2E7D32; flex-shrink: 0;" aria-hidden="true"></i>
+                <div>
+                    <strong>Verification Required:</strong> Store manager approval required before activation.
+                </div>
+            </div>
+
+            {% if error %}
+            <div style="background: #FCE8E8; color: #C62828; border: 1px solid #F5C6CB; padding: 7px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 600; text-align: left; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="alert-circle" class="icon-sm" aria-hidden="true"></i>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('auth.register') }}">
+                <div class="form-row-2">
+                    <div class="input-group">
+                        <label class="input-label">Full Name</label>
+                        <input type="text" name="full_name" class="input-box" placeholder="e.g. Daniella Jaralve" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Staff Username</label>
+                        <input type="text" name="username" class="input-box" placeholder="@ e.g. daniellajaralve" required>
+                    </div>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="input-group">
+                        <label class="input-label">Password</label>
+                        <input type="password" name="password" class="input-box" placeholder="••••••••" required>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Confirm Password</label>
+                        <input type="password" name="confirm_password" class="input-box" placeholder="••••••••" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">Assigned Role</label>
+                    <select name="role" class="input-box" style="cursor: pointer;">
+                        <option value="Cashier / Sales Clerk">Cashier / Sales Clerk</option>
+                        <option value="Store Manager">Store Manager</option>
+                        <option value="Auditor">Auditor</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-signup-submit">
+                    <span>Create Account</span>
+                    <i data-lucide="arrow-right" class="icon-sm" aria-hidden="true"></i>
+                </button>
+            </form>
+
+            <div style="margin-top: 8px; font-size: 11.5px; color: var(--text-secondary);">
+                Already have an account? <a href="{{ url_for('auth.login') }}" style="color: var(--brand-red); font-weight: 700; text-decoration: none;">Login</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>
